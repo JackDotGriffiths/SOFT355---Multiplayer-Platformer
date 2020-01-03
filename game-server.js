@@ -1,15 +1,15 @@
-const http = require('http');
-const hostname = '127.0.0.1';
-const port = 9000;
-const express = require('express');
-const app = new express();
-var path = require('path');
+var http = require('http');
 
-app.use(express.static(path.join(__dirname + '/assets/')));
+var finalhandler = require('finalhandler');
+var serveStatic = require('serve-static');
 
-app.get('/', function(req, res) {
-    console.log(`Server running at http://${hostname}:${port}/`);
-    res.sendFile(path.join(__dirname + '/index.html'));
- });
+var serve = serveStatic("./");
 
-app.listen(port);
+var server = http.createServer(function(req, res) {
+  var done = finalhandler(req, res);
+  serve(req, res, done);
+});
+
+server.listen(9000, function() {
+  console.log("Listening on " + 9000);
+});

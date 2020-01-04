@@ -26,6 +26,7 @@ app.get('/data', function(req, res) {
 
 function createLevel(){ // Generates the id for the next level.
   var difference = microtime.now()-previousTime;
+  //If there has been enough ticks since the previous execution, This keeps the game timing consistant.
   if(difference >= 5000000){
     previousTime = microtime.now();
     currentLevel = nextLevel;
@@ -36,14 +37,13 @@ function createLevel(){ // Generates the id for the next level.
     while(randomInt == currentLevel);
     nextLevel = randomInt;
 
-    var discrepancy  = difference -5000000;
-    if (discrepancy > 24000){
-      console.log("-----------------------------------------------------------------------------");
+    var discrepancy  = difference - 5000000;
+    if (discrepancy > 70000){
+      console.log("-------------------------------------------------------------------------------");
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
-      console.log("-----------------------------------------------------------------------------");
-      console.log("");
+      console.log("-------------------------------------------------------------------------------");
     }
-    console.log("-GENERATING- nextLevel is " + nextLevel + " <|> Delay of " + difference + " ticks. | Discrepancy of " + (difference -5000000));
+    console.log("-GENERATING- Incoming section " + nextLevel + " | Delay of " + difference + " ticks | Discrepancy of " + (difference -5000000));
     previousTime = microtime.now();
   }
 }

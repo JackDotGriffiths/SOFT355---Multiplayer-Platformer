@@ -48,6 +48,13 @@
   var mapWidth = 51;
   var mapHeight = 37;
 
+  var firstTime = true;
+  //Keeps track of the index of terrain as the player joins the game, so it knows when to start generating.
+  var joiningTerrainIndex = "0";
+  //Used to check if a change has been made and hence new terrain should be placed
+  var nextTerrainIndex = "0";
+  var currentTerrainIndex = "0";
+
   var background;
 
   var game = new Phaser.Game(config);
@@ -69,9 +76,6 @@
       stars = this.physics.add.staticGroup();
       obstacles = this.physics.add.staticGroup();
       platforms.create(350, 568, 'ground').setScale(1).refreshBody();
-      spawnBlock1();
-      //  Now let's create some ledges
-
 
       // The player and its settings
       player = this.physics.add.sprite(100, 450, 'dude');
@@ -113,13 +117,18 @@
       this.physics.add.overlap(player, stars, collectStar, null, this);
 
       this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+
+      $.get('/data', {}, function(data){
+        console.log(data.toString());
+        joiningTerrainIndex = data.toString();
+        currentTerrainIndex = joiningTerrainIndex;
+        nextTerrainIndex = joiningTerrainIndex;
+      });
+
   }
 
   function update (time, delta){
-      if (gameOver)
-      {
-          return;
-      }
+      if (gameOver){return;}
 
       player.setVelocityX(240);
       player.anims.play('right', true);
@@ -132,34 +141,49 @@
       //  Any speed as long as 16 evenly divides by it
       sx += 4;
       distance += sx;
-      //platforms.create(player.x + 200,600, 'ground');
+
+
       this.cameras.main.scrollX = sx;
       scoreText.x = sx+16;
-      $.get('/data', {}, function(data){console.log(data)});
+      //Get the next terrain index from the server
+      $.get('/data', {}, function(data){
+        nextTerrainIndex = data.toString();
+        if(currentTerrainIndex != nextTerrainIndex)
+        {
+          console.log("Generating Panel " + currentTerrainIndex);
+          //console.log("Changed from section " + currentTerrainIndex + " to section " + nextTerrainIndex);
+          currentTerrainIndex = nextTerrainIndex;
+          switch(currentTerrainIndex)
+          {
+            case "1":
+              spawnBlock1();
+              break;
+            case "2":
+              spawnBlock2();
+              break;
+            case "3":
+              spawnBlock3();
+              break;
+            case "4":
+              spawnBlock4();
+              break;
+            case "5":
+              spawnBlock5();
+              break;
+          }
+        }
+      });
 
 
-      // if (sx % 1200 == 0){
-      //   var randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;
-      //   console.log("Spawning Section " + randomInt);
-      //   switch(randomInt){
-      //     case 1:
-      //       spawnBlock1();
-      //       break;
-      //     case 2:
-      //       spawnBlock2();
-      //       break;
-      //     case 3:
-      //       spawnBlock3();
-      //       break;
-      //     case 4:
-      //       spawnBlock4();
-      //       break;
-      //     case 5:
-      //       spawnBlock5();
-      //       break;
-      //   }
-      //   distance = 0;
-      // }
+      if (nextTerrainIndex == joiningTerrainIndex && firstTime)
+      {
+        platforms.create(sx+300, 568, 'ground');
+      }
+      else{
+        firstTime = false;
+      }
+
+
   }
   //Procedural Generation Methods
   function spawnBlock1(){

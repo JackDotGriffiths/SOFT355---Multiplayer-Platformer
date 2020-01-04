@@ -2,28 +2,48 @@ var http = require('http');
 var express = require('express');
 var finalhandler = require('finalhandler');
 var serveStatic = require('serve-static');
+var microtime = require('microtime');
 
 var serve = serveStatic("./");
 var app = express();
-var currentLevel = "1";
-var nextLevel = "2";
+var currentLevel = 1;
+var nextLevel = 2;
+var previousTime;
 
 
 app.use(express.static('./'));//Serving static file
 
 app.listen(9000, function() { //Listener for specified port
-    //setInterval(createLevel,1500);
+    previousTime = microtime.now();
+    setInterval(createLevel,100);
     console.log("Server running at: http://localhost:" + 9000)
 });
 
 
 app.get('/data', function(req, res) {
-    res.send(nextLevel)
+  res.send(nextLevel.toString());
 });
 
-function createLevel(){
-  currentLevel = nextLevel;
-  var randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;
-  nextLevel = randomInt;
-  console.log("Current Level is " + currentLevel + ". Next Level is " + nextLevel);
+function createLevel(){ // Generates the id for the next level.
+  var difference = microtime.now()-previousTime;
+  if(difference >= 5000000){
+    previousTime = microtime.now();
+    currentLevel = nextLevel;
+    var randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;
+    do{
+      randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;
+    }
+    while(randomInt == currentLevel);
+    nextLevel = randomInt;
+
+    var discrepancy  = difference -5000000;
+    if (discrepancy > 24000){
+      console.log("-----------------------------------------------------------------------------");
+      console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
+      console.log("-----------------------------------------------------------------------------");
+      console.log("");
+    }
+    console.log("-GENERATING- nextLevel is " + nextLevel + " <|> Delay of " + difference + " ticks. | Discrepancy of " + (difference -5000000));
+    previousTime = microtime.now();
+  }
 }

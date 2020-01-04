@@ -9,6 +9,7 @@
             margin: 0;
         }
     </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 </head>
 <body>
 
@@ -134,31 +135,31 @@
       //platforms.create(player.x + 200,600, 'ground');
       this.cameras.main.scrollX = sx;
       scoreText.x = sx+16;
+      $.get('/data', {}, function(data){console.log(data)});
 
 
-      if (sx % 1200 == 0){
-        var randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;
-        console.log("Spawning Section " + randomInt);
-        switch(randomInt){
-          case 1:
-            spawnBlock1();
-            break;
-          case 2:
-            spawnBlock2();
-            break;
-          case 3:
-            spawnBlock3();
-            break;
-          case 4:
-            spawnBlock4();
-            break;
-          case 5:
-            spawnBlock5();
-            break;
-        }
-
-        distance = 0;
-      }
+      // if (sx % 1200 == 0){
+      //   var randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;
+      //   console.log("Spawning Section " + randomInt);
+      //   switch(randomInt){
+      //     case 1:
+      //       spawnBlock1();
+      //       break;
+      //     case 2:
+      //       spawnBlock2();
+      //       break;
+      //     case 3:
+      //       spawnBlock3();
+      //       break;
+      //     case 4:
+      //       spawnBlock4();
+      //       break;
+      //     case 5:
+      //       spawnBlock5();
+      //       break;
+      //   }
+      //   distance = 0;
+      // }
   }
   //Procedural Generation Methods
   function spawnBlock1(){

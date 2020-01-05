@@ -41,6 +41,9 @@
   var score = 0;
   var gameOver = false;
   var scoreText;
+  var playerNameText;
+
+  var playerNameVal;
 
   var map;
   var sx = 0;
@@ -71,17 +74,42 @@
   function create (){
       var self = this;
       this.socket = io();
+      this.otherPlayers = this.physics.add.staticGroup();
       this.socket.on('currentPlayers',function(players){
         Object.keys(players).forEach(function(id){
           if(players[id].playerId == self.socket.id){
-            console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + players[id].playerName);
+            playerNameVal = players[id].playerName;
+            console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + playerNameVal);
+          } else{
+            console.log("New Player Found. Socket ID is " + players[id].playerId + " and name is " + players[id].playerName);
+            addOtherPlayer(self,players[id]);
+          }
+        })
+      })
+      this.socket.on('newPlayer',function (playerInfo){
+        addOtherPlayer(self,playerInfo);
+      })
+      this.socket.on('disconnect',function(playerId){
+        self.otherPlayers.getChildren().forEach(function(otherPlayer){
+          if(playerId == otherPlayer.playerId){
+            otherPlayer.destroy();
+          }
+        })
+      })
+      this.socket.on('playerMoved',function(playerInfo){
+        self.otherPlayers.getChildren().forEach(function(otherPlayer){
+          if(playerInfo.playerId == otherPlayer.playerId){
+            console.log(playerInfo.y)
+            otherPlayer.setPosition(player.x,playerInfo.y);
           }
         })
       })
 
+
       var background = this.physics.add.sprite(400, 300, 'sky');
       background.body.velocity.x=240;
       background.body.setAllowGravity(false);
+      //this.otherPlayers.body.setAllowGravity(false);
       platforms = this.physics.add.staticGroup();
       stars = this.physics.add.staticGroup();
       obstacles = this.physics.add.staticGroup();
@@ -113,6 +141,7 @@
 
       //  The score
       scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+      playerNameText = this.add.text(sx+16, 50, playerNameVal, { fontSize: '15px', fill: '#ffffff', align: 'center'});
 
       //  Collide the player and the stars with the platforms
       this.physics.add.collider(player, platforms);
@@ -125,7 +154,6 @@
       this.physics.add.collider(player, obstacles, hitObstacle, null, this);
 
       $.get('/data', {}, function(data){
-        console.log(data.toString());
         joiningTerrainIndex = data.toString();
         currentTerrainIndex = joiningTerrainIndex;
         nextTerrainIndex = joiningTerrainIndex;
@@ -139,10 +167,16 @@
       player.setVelocityX(240);
       player.anims.play('right', true);
 
-      if (cursors.up.isDown && player.body.touching.down)
-      {
-          player.setVelocityY(-900);
-      }
+      //Jumping
+      if (cursors.up.isDown && player.body.touching.down){player.setVelocityY(-900);  }
+      //Sending Player Position
+      var y = player.y;
+      //Send player position
+      this.socket.emit('playerMovement',{ y: player.y});
+      //Save old position data
+      player.oldPosition = {
+        y :player.y
+      };
 
       //  Any speed as long as 16 evenly divides by it
       sx += 4;
@@ -151,12 +185,15 @@
 
       this.cameras.main.scrollX = sx;
       scoreText.x = sx+16;
-      //Get the next terrain index from the server
+      playerNameText.setText(playerNameVal);
+      playerNameText.x = player.x - 32;
+      playerNameText.y = player.y - 40;
+      Get the next terrain index from the server
       $.get('/data', {}, function(data){
         nextTerrainIndex = data.toString();
         if(currentTerrainIndex != nextTerrainIndex)
         {
-          console.log("Generating Panel " + currentTerrainIndex);
+          //console.log("Generating Panel " + currentTerrainIndex);
           //console.log("Changed from section " + currentTerrainIndex + " to section " + nextTerrainIndex);
           currentTerrainIndex = nextTerrainIndex;
           switch(currentTerrainIndex)
@@ -179,7 +216,6 @@
           }
         }
       });
-
 
       if (nextTerrainIndex == joiningTerrainIndex && firstTime)
       {
@@ -270,13 +306,20 @@
   }
 
  //Player Controller
-  function die(player){
+ function addOtherPlayer(self, playerInfo){
+   const otherPlayer = self.add.sprite(300,550,'dude');
+   otherPlayer.playerId = playerInfo.playerId;
+   otherPlayer.playerName = playerInfo.playerName;
+   self.otherPlayers.add(otherPlayer);
+ }
+ function die(player){
     //player.physics.pause();
     player.setVelocityX(2);
     player.setTint(0xff0000);
     player.anims.play('turn');
     gameOver = true;
   }
+
 
 </script>
 

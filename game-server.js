@@ -20,7 +20,7 @@ var players = {};
 app.use(express.static('./'));//Serving static file
 
 io.on('connection', function(socket){
-  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog"];
+  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer"];
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
   players[socket.id] = {
     playerId : socket.id,
@@ -31,10 +31,17 @@ io.on('connection', function(socket){
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
   socket.on('disconnect', function(){
-  console.log('- PLAYER DISCONNECTED - A user has disconnected from ' + socket.id)
+  console.log('- PLAYER DISCONNECTED - '+ players[socket.id].playerName +' has disconnected from ' + socket.id)
   delete players[socket.id];
   io.emit('disconnect',socket.id);
   })
+
+  socket.on('playerMovement',function(movementData){
+    players[socket.id].y = movementData.y;
+    socket.broadcast.emit('playerMoved',players[socket.id]);
+  })
+
+
 })
 
 server.listen(9000, function() { //Listener for specified port

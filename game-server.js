@@ -14,13 +14,26 @@ var io = require('socket.io').listen(server);
 
 //Mongoose used to control connection to MongoDB for highscore storage on the database.
 var mongoose = require('mongoose');
-mongoose.set('useFindAndModify',false);
-const uri = "mongodb+srv://gameServer:la3hStfpuh5hdGvh@cluster0-5gxvf.mongodb.net/test?retryWrites=true&w=majority";
-mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology : true}, () => { console.log("we are connected")}).catch(err => console.log(err));
+//const uri = "mongodb+srv://gameServer:la3hStfpuh5hdGvh@cluster0-5gxvf.mongodb.net/SOFT356?retryWrites=true&w=majority";
+const uri = "mongodb+srv://gameServer:gameServerUser@cluster0-5gxvf.mongodb.net/test?retryWrites=true&w=majority"
+mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology : true});
+const db = mongoose.connection;
+db.on("error", () => {
+    console.log("> error occurred from the database");
+});
+db.once("open", () => {
+    console.log("> successfully opened the database");
+});
+const schema = {
+  playerSocket : { type: mongoose.SchemaTypes.String, required: true },
+  playerName: { type: mongoose.SchemaTypes.String, required: true },
+  playerScore : { type: mongoose.SchemaTypes.Number, required: true }
+};
+const collectionName = "test.Highscores";
+const scoreSchema = mongoose.Schema(schema);
+const ScoreDB = mongoose.model(collectionName,scoreSchema);
 
-var Entry = mongoose.model("Entry",{playerSocket : String,playerName: String, playerScore : Number});
-module.exports.Entry = Entry;
-
+//module.exports.Entry = Entry;
 var serve = serveStatic("./");
 var currentLevel = 1;
 var nextLevel = 2;
@@ -90,24 +103,11 @@ app.get('/highscore3',function(req,res){
 });
 
 function saveScoreToDatabase(socketID,playerName,playerScore){
-  var entry = new Entry({
-    "playerSocket" : socketID,
-    "playerName" : playerName,
-    "playerScore" : playerScore
+  ScoreDB.create({
+    playerSocket : socketID,
+    playerName : playerName,
+    playerScore : playerScore
   });
-
-  // if (entry.playerScore > 0){
-  //   entry.save();
-  // }
-  console.log("Saving score " + entry);
-  entry.save();
-  // var promise = entry.save();
-  // promise.then(function(doc){
-  //   Entry.find(function(entries){
-  //     console.log(entries);
-  //   });
-  //
-  // })
 }
 
 

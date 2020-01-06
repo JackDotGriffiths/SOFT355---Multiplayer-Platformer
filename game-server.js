@@ -1,12 +1,25 @@
+//HTTP and Express used to create the server
 var http = require('http');
 var express = require('express');
+
+//FileHander used to ensure correct files are served
 var finalhandler = require('finalhandler');
 var serveStatic = require('serve-static');
+
+//Microtime used to ensure accurate ticks on the server for procedural generation
 var microtime = require('microtime');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
 
+//Mongoose used to control connection to MongoDB for highscore storage on the database.
+var mongoose = require('mongoose');
+mongoose.set('useFindAndModify',false);
+const uri = "mongodb+srv://gameServer:la3hStfpuh5hdGvh@cluster0-5gxvf.mongodb.net/test?retryWrites=true&w=majority";
+mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology : true}, () => { console.log("we are connected")}).catch(err => console.log(err));
+
+var Entry = mongoose.model("Entry",{playerSocket : String,playerName: String, playerScore : Number});
+module.exports.Entry = Entry;
 
 var serve = serveStatic("./");
 var currentLevel = 1;
@@ -15,10 +28,14 @@ var previousTime;
 
 //Multiplayer
 var players = {};
-
+var cameraPosition = 0;
+var highscore1;
+var highscore2;
+var highscore3;
 
 app.use(express.static('./'));//Serving static file
 
+//Websockets used to control Multiplayer elements of gameplay.
 io.on('connection', function(socket){
   var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer"];
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
@@ -30,6 +47,10 @@ io.on('connection', function(socket){
   socket.emit('currentPlayers', players);
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
+  socket.on('camPosRequest',function(){
+    io.emit('camPos',cameraPosition);
+  })
+
   socket.on('disconnect', function(){
   console.log('- PLAYER DISCONNECTED - '+ players[socket.id].playerName +' has disconnected from ' + socket.id)
   delete players[socket.id];
@@ -37,24 +58,62 @@ io.on('connection', function(socket){
   })
 
   socket.on('playerMovement',function(movementData){
+    players[socket.id].x = movementData.x;
     players[socket.id].y = movementData.y;
     socket.broadcast.emit('playerMoved',players[socket.id]);
   })
 
+  socket.on('sendScore',function(playerData){
+    //console.log("Store the score of " + playerData.socket + " name of " + playerData.name + " score of " + playerData.score)
+    saveScoreToDatabase(playerData.socket,playerData.name,playerData.score);
+  })
+
 
 })
-
 server.listen(9000, function() { //Listener for specified port
     previousTime = microtime.now();
     setInterval(createLevel,100);
+    setInterval(incrementCamera,2);
     console.log("Server running at: http://localhost:" + 9000)
 });
-
-
 app.get('/data', function(req, res) {
   res.send(nextLevel.toString());
 });
+app.get('/highscore1',function(req,res){
+  res.send(highscore1);
+});
+app.get('/highscore2',function(req,res){
+  res.send(highscore2);
+});
+app.get('/highscore3',function(req,res){
+  res.send(highscore3);
+});
 
+function saveScoreToDatabase(socketID,playerName,playerScore){
+  var entry = new Entry({
+    "playerSocket" : socketID,
+    "playerName" : playerName,
+    "playerScore" : playerScore
+  });
+
+  // if (entry.playerScore > 0){
+  //   entry.save();
+  // }
+  console.log("Saving score " + entry);
+  entry.save();
+  // var promise = entry.save();
+  // promise.then(function(doc){
+  //   Entry.find(function(entries){
+  //     console.log(entries);
+  //   });
+  //
+  // })
+}
+
+
+function incrementCamera(){
+  cameraPosition += 0.5;
+}
 function createLevel(){ // Generates the id for the next level.
   var difference = microtime.now()-previousTime;
   //If there has been enough ticks since the previous execution, This keeps the game timing consistant.
@@ -74,7 +133,7 @@ function createLevel(){ // Generates the id for the next level.
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
       console.log("-------------------------------------------------------------------------------");
     }
-    console.log("     -> GENERATING- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + (difference -5000000));
+    //console.log("     -> GENERATING- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + discrepancy + " | Camera Position : " + cameraPosition);
     previousTime = microtime.now();
   }
 }

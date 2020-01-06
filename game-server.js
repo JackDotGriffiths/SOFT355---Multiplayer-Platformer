@@ -43,9 +43,9 @@ var previousTime;
 //Multiplayer
 var players = {};
 var cameraPosition = 0;
-var highscore1;
-var highscore2;
-var highscore3;
+var highscore1 = "Database connection not yet established";
+var highscore2 = "Database connection not yet established";
+var highscore3 = "Database connection not yet established";
 
 app.use(express.static('./'));//Serving static file
 
@@ -82,6 +82,9 @@ io.on('connection', function(socket){
     saveScoreToDatabase(playerData.socket,playerData.name,playerData.score);
   })
 
+  socket.on('updateScores',function(){
+    socket.broadcast.emit('updateHighscores');
+  })
 
 })
 server.listen(9000, function() { //Listener for specified port
@@ -94,13 +97,13 @@ app.get('/data', function(req, res) {
   res.send(nextLevel.toString());
 });
 app.get('/highscore1',function(req,res){
-  res.send(highscore1);
+  res.send(highscore1.toString());
 });
 app.get('/highscore2',function(req,res){
-  res.send(highscore2);
+  res.send(highscore2.toString());
 });
 app.get('/highscore3',function(req,res){
-  res.send(highscore3);
+  res.send(highscore3.toString());
 });
 
 function saveScoreToDatabase(socketID,playerName,playerScore){
@@ -119,11 +122,7 @@ function saveScoreToDatabase(socketID,playerName,playerScore){
     console.log(highscore2);
     console.log(highscore3);
   });
-
-
 }
-
-
 function incrementCamera(){
   cameraPosition += 0.5;
 }

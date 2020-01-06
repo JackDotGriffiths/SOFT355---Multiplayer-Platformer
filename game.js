@@ -149,13 +149,25 @@ function create (){
       currentTerrainIndex = joiningTerrainIndex;
       nextTerrainIndex = joiningTerrainIndex;
     });
+    $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
+    $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
+    $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
 }
 
 function update (time, delta){
+
+    //Update the high scores
+
+
     if (player.y > 650){die();}
     player.anims.play('right', true);
     //Jumping
-    if (cursors.up.isDown && player.body.touching.down){player.setVelocityY(-1000);  }
+    if (cursors.up.isDown && player.body.touching.down){
+      player.setVelocityY(-1000);
+      $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
+      $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
+      $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
+    }
     //Sending Player Position
     var x = player.x;
     var y = player.y;
@@ -289,8 +301,6 @@ function spawnBlock5(){
   obstacles.create(offset+1100,415,'obstacle');
   obstacles.create(offset+1300,415,'obstacle');
   stars.create(offset+830,420,'star');} //Place Obstacles Here & Ensure Score moves with camera
-
-
 //Collection/Interaction Methods
 function collectStar (player, star){
     star.disableBody(true, true);

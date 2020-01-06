@@ -22,7 +22,7 @@ db.on("error", () => {
     console.log("> Error occurred from the database");
 });
 db.once("open", () => {
-    console.log("> Successfully opened the database");
+    console.log("> Successfully connected to the database");
 });
 const schema = {
   playerSocket : { type: mongoose.SchemaTypes.String, required: true },
@@ -31,7 +31,8 @@ const schema = {
 };
 const collectionName = "highscores";
 const scoreSchema = mongoose.Schema(schema);
-const ScoreDB = mongoose.model(collectionName,scoreSchema);
+const ScoreModel = mongoose.model(collectionName,scoreSchema);
+var ScoreList = [];
 
 //module.exports.Entry = Entry;
 var serve = serveStatic("./");
@@ -50,7 +51,7 @@ app.use(express.static('./'));//Serving static file
 
 //Websockets used to control Multiplayer elements of gameplay.
 io.on('connection', function(socket){
-  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer"];
+  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer","Camel","Whale","Mongoose","David"];
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
   players[socket.id] = {
     playerId : socket.id,
@@ -87,7 +88,7 @@ server.listen(9000, function() { //Listener for specified port
     previousTime = microtime.now();
     setInterval(createLevel,100);
     setInterval(incrementCamera,2);
-    console.log("Server running at: http://localhost:" + 9000)
+    console.log("> Server running at: http://localhost:" + 9000)
 });
 app.get('/data', function(req, res) {
   res.send(nextLevel.toString());
@@ -103,11 +104,23 @@ app.get('/highscore3',function(req,res){
 });
 
 function saveScoreToDatabase(socketID,playerName,playerScore){
-  ScoreDB.create({
+  ScoreModel.create({
     playerSocket : socketID,
     playerName : playerName,
     playerScore : playerScore
   });
+  console.log("-> SCORE SAVED <- Socket : " + socketID + " | Player Name : " + playerName + " | Player Score : " + playerScore);
+  ScoreModel.find({}).sort('-playerScore').exec(function(err,ScoreModels){
+    ScoreList = ScoreModels;
+    highscore1 = "#1 : " + ScoreList[1].playerScore + " - " + ScoreList[1].playerName + " (" + ScoreList[1].playerSocket + ")";
+    highscore2 = "#2 : " + ScoreList[2].playerScore + " - " + ScoreList[2].playerName + " (" + ScoreList[2].playerSocket + ")";
+    highscore3 = "#3 : " + ScoreList[3].playerScore + " - " + ScoreList[3].playerName + " (" + ScoreList[3].playerSocket + ")";
+    console.log(highscore1);
+    console.log(highscore2);
+    console.log(highscore3);
+  });
+
+
 }
 
 
@@ -133,7 +146,7 @@ function createLevel(){ // Generates the id for the next level.
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
       console.log("-------------------------------------------------------------------------------");
     }
-    //console.log("     -> GENERATING- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + discrepancy + " | Camera Position : " + cameraPosition);
+    console.log("     -> GENERATING <- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + discrepancy + " | Camera Position : " + cameraPosition);
     previousTime = microtime.now();
   }
 }

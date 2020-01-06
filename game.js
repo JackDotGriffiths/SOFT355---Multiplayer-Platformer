@@ -78,12 +78,12 @@ function create (){
           console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + playerNameVal);
         } else{
           console.log("New Player Found. Socket ID is " + players[id].playerId + " and name is " + players[id].playerName);
-          addOtherPlayer(self,players[id]);
+          //addOtherPlayer(self,players[id]);
         }
       })
     })
     this.socket.on('newPlayer',function (playerInfo){
-      addOtherPlayer(self,playerInfo);
+      //addOtherPlayer(self,playerInfo);
     })
     this.socket.on('disconnect',function(playerId){
       self.otherPlayers.getChildren().forEach(function(otherPlayer){
@@ -164,6 +164,11 @@ function create (){
 function update (time, delta){
     if (changingRoom == true){
       this.socket.emit('changeRoomCode',{roomCode:roomCodeToJoin});
+      $.get('/data', {}, function(data){
+        joiningTerrainIndex = data.toString();
+      });
+      scoreText.setText('score : 0');
+      firstTime = true;
       changingRoom = false;
     }
     //Update the high scores
@@ -237,6 +242,7 @@ function update (time, delta){
       //Ensures the player doesn't start in the void.
       if (currentTerrainIndex == joiningTerrainIndex && firstTime)
       {
+        scoreText.setText('score : 0');
         platforms.create(player.x , 570, 'ground');
         platforms.create(player.x + 400, 570, 'ground');
       }
@@ -247,10 +253,9 @@ function update (time, delta){
 
       background.y = 300;
       background.x = cameraPos;
-
+      scoreText.x = cameraPos+16;
       if(gameOver==false)
       {
-        scoreText.x = cameraPos+16;
         player.x = cameraPos + 100;
         playerNameText.setText(playerNameVal);
         playerNameText.x = player.x - (playerNameText.width/2);
@@ -361,9 +366,6 @@ function die(player){
     gameOver = true;
   }
 }
-
-
-
 
 
 $(document).ready(function() {

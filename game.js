@@ -51,7 +51,7 @@ var currentTerrainIndex = "0";
 var background;
 
 var game = new Phaser.Game(config);
-
+setInterval(function(){updateHighscoreText();},200);
 function preload (){
     this.load.image('sky', 'assets/sky.png');
     this.load.image('ground', 'assets/platform.png');
@@ -149,9 +149,6 @@ function create (){
       currentTerrainIndex = joiningTerrainIndex;
       nextTerrainIndex = joiningTerrainIndex;
     });
-    $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
-    $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
-    $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
 }
 
 function update (time, delta){
@@ -164,9 +161,6 @@ function update (time, delta){
     //Jumping
     if (cursors.up.isDown && player.body.touching.down){
       player.setVelocityY(-1000);
-      $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
-      $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
-      $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
     }
     //Sending Player Position
     var x = player.x;
@@ -291,7 +285,7 @@ function spawnBlock4(){
   stars.create(offset+880,470,'star');
   obstacles.create(offset+960,465,'obstacle');
   obstacles.create(offset+800,465,'obstacle');
-  obstacles.create(offset+445,515,'obstacle');} //Place Obstacles here
+  obstacles.create(offset+445,515,'obstacle');}
 function spawnBlock5(){
   var offset = cameraPos+400;
   platforms.create(offset+ 400,570, 'ground');
@@ -300,8 +294,14 @@ function spawnBlock5(){
   obstacles.create(offset+880,415,'obstacle');
   obstacles.create(offset+1100,415,'obstacle');
   obstacles.create(offset+1300,415,'obstacle');
-  stars.create(offset+830,420,'star');} //Place Obstacles Here & Ensure Score moves with camera
-//Collection/Interaction Methods
+  stars.create(offset+830,420,'star');
+}
+
+function updateHighscoreText(){
+  $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
+  $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
+  $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
+}
 function collectStar (player, star){
     star.disableBody(true, true);
 

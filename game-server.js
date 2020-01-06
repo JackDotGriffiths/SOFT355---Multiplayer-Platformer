@@ -43,15 +43,15 @@ var previousTime;
 //Multiplayer
 var players = {};
 var cameraPosition = 0;
-var highscore1 = "Database connection not yet established";
-var highscore2 = "Database connection not yet established";
-var highscore3 = "Database connection not yet established";
+var highscore1 = "No Data Available";
+var highscore2 = "No Data Available";
+var highscore3 = "No Data Available";
 
 app.use(express.static('./'));//Serving static file
 
 //Websockets used to control Multiplayer elements of gameplay.
 io.on('connection', function(socket){
-  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer","Camel","Whale","Mongoose","David"];
+  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer","Camel","Whale","Mongoose","David","Moose"];
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
   players[socket.id] = {
     playerId : socket.id,
@@ -113,14 +113,18 @@ function saveScoreToDatabase(socketID,playerName,playerScore){
     playerScore : playerScore
   });
   console.log("-> SCORE SAVED <- Socket : " + socketID + " | Player Name : " + playerName + " | Player Score : " + playerScore);
+  updateHighscores();
+
+}
+function updateHighscores(){
   ScoreModel.find({}).sort('-playerScore').exec(function(err,ScoreModels){
     ScoreList = ScoreModels;
-    highscore1 = "#1 : " + ScoreList[1].playerScore + " - " + ScoreList[1].playerName + " (" + ScoreList[1].playerSocket + ")";
-    highscore2 = "#2 : " + ScoreList[2].playerScore + " - " + ScoreList[2].playerName + " (" + ScoreList[2].playerSocket + ")";
-    highscore3 = "#3 : " + ScoreList[3].playerScore + " - " + ScoreList[3].playerName + " (" + ScoreList[3].playerSocket + ")";
-    console.log(highscore1);
-    console.log(highscore2);
-    console.log(highscore3);
+    highscore1 = "#1 : " + ScoreList[0].playerScore + " - " + ScoreList[0].playerName + " (" + ScoreList[1].playerSocket + ")";
+    highscore2 = "#2 : " + ScoreList[1].playerScore + " - " + ScoreList[1].playerName + " (" + ScoreList[2].playerSocket + ")";
+    highscore3 = "#3 : " + ScoreList[2].playerScore + " - " + ScoreList[2].playerName + " (" + ScoreList[3].playerSocket + ")";
+    // console.log(highscore1);
+    // console.log(highscore2);
+    // console.log(highscore3);
   });
 }
 function incrementCamera(){
@@ -130,6 +134,7 @@ function createLevel(){ // Generates the id for the next level.
   var difference = microtime.now()-previousTime;
   //If there has been enough ticks since the previous execution, This keeps the game timing consistant.
   if(difference >= 5000000){
+    updateHighscores();
     previousTime = microtime.now();
     currentLevel = nextLevel;
     var randomInt = Math.floor(Math.random() * Math.floor(5)) + 1;

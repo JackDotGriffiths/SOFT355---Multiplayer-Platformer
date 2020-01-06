@@ -19,17 +19,17 @@ const uri = "mongodb+srv://gameServer:gameServerUser@cluster0-5gxvf.mongodb.net/
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology : true});
 const db = mongoose.connection;
 db.on("error", () => {
-    console.log("> error occurred from the database");
+    console.log("> Error occurred from the database");
 });
 db.once("open", () => {
-    console.log("> successfully opened the database");
+    console.log("> Successfully opened the database");
 });
 const schema = {
   playerSocket : { type: mongoose.SchemaTypes.String, required: true },
   playerName: { type: mongoose.SchemaTypes.String, required: true },
   playerScore : { type: mongoose.SchemaTypes.Number, required: true }
 };
-const collectionName = "test.Highscores";
+const collectionName = "highscores";
 const scoreSchema = mongoose.Schema(schema);
 const ScoreDB = mongoose.model(collectionName,scoreSchema);
 

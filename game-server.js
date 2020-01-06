@@ -55,7 +55,8 @@ io.on('connection', function(socket){
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
   players[socket.id] = {
     playerId : socket.id,
-    playerName : possibleNames[randomInt]
+    playerName : possibleNames[randomInt],
+    roomCode : "NONE"
   };
   console.log('+ PLAYER CONNECTED + ' + players[socket.id].playerName + ' has connected from ' + socket.id);
   socket.emit('currentPlayers', players);
@@ -78,12 +79,21 @@ io.on('connection', function(socket){
   })
 
   socket.on('sendScore',function(playerData){
-    //console.log("Store the score of " + playerData.socket + " name of " + playerData.name + " score of " + playerData.score)
+    //Send the score to the database.
     saveScoreToDatabase(playerData.socket,playerData.name,playerData.score);
   })
 
   socket.on('updateScores',function(){
+    //Requests the highscores from the database.
     socket.broadcast.emit('updateHighscores');
+  })
+
+  socket.on('changeRoomCode',function(roomRequest){
+    //changes the room code for the current player.
+    players[socket.id].roomCode = roomRequest.roomCode;
+    //console.log(socket.id + " is joining room " + roomRequest.roomCode);
+    socket.emit('updateRoomCode', players);
+    //players[roomRequest.playerSocket].roomCode = roomRequest.roomCode;
   })
 
 })

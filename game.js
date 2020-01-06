@@ -28,6 +28,10 @@ var playerNameText;
 
 var playerSocketVal;
 var playerNameVal;
+var playerRoomCode;
+var roomCodeToJoin;
+var changingRoom = false;
+
 var cameraPos = 0;
 var background;
 
@@ -69,6 +73,8 @@ function create (){
         if(players[id].playerId == self.socket.id){
           playerNameVal = players[id].playerName;
           playerSocketVal = players[id].playerId;
+          playerRoomCode = players[id].roomCode;
+          console.log("Awaiting Room Code " + players[id].roomCode);
           console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + playerNameVal);
         } else{
           console.log("New Player Found. Socket ID is " + players[id].playerId + " and name is " + players[id].playerName);
@@ -95,6 +101,10 @@ function create (){
     })
     this.socket.on('camPos',function(camValue){
         cameraPos = camValue;
+    })
+    this.socket.on('updateRoomCode',function(players){
+      console.log("Changing to " + players[self.socket.id].roomCode);
+      playerRoomCode = players[self.socket.id].roomCode;
     })
 
 
@@ -131,7 +141,7 @@ function create (){
     cursors = this.input.keyboard.createCursorKeys();
 
     //  The score
-    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#ffffff' });
     playerNameText = this.add.text(sx+16, 50, playerNameVal, { fontSize: '15px', fill: '#ffffff', align: 'center'});
 
     //  Collide the player and the stars with the platforms
@@ -152,96 +162,104 @@ function create (){
 }
 
 function update (time, delta){
-
+    if (changingRoom == true){
+      this.socket.emit('changeRoomCode',{roomCode:roomCodeToJoin});
+      changingRoom = false;
+    }
     //Update the high scores
-
-
-    if (player.y > 650){die();}
-    player.anims.play('right', true);
-    //Jumping
-    if (cursors.up.isDown && player.body.touching.down){
-      player.setVelocityY(-1000);
+    console.log("Room code is " + playerRoomCode)
+    if (playerRoomCode == "NONE")
+    {
+      scoreText.setText('Join a room above!');
     }
-    //Sending Player Position
-    var x = player.x;
-    var y = player.y;
-    //Send player position
-    this.socket.emit('playerMovement',{x : player.x, y: player.y});
-
-    //  Any speed as long as 16 evenly divides by it
-    sx += 4;
-    distance += sx;
-
-    this.socket.emit('camPosRequest');
-    this.cameras.main.scrollX = cameraPos;
-
-
-
-    //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -platforms.create(player.x , 350, 'ground');
-
-    //Get the next terrain index from the server
-    $.get('/data', {}, function(data){
-      nextTerrainIndex = data.toString();
-      if(currentTerrainIndex != nextTerrainIndex)
-      {
-        console.log("Generating Panel " + currentTerrainIndex);
-        switch(currentTerrainIndex)
-        {
-          case "0":
-            firstTime = true;
-            platforms.create(player.x , 570, 'ground');
-            platforms.create(player.x + 400, 570, 'ground');
-            break;
-          case "1":
-            generated = true;
-            spawnBlock1();
-            break;
-          case "2":
-            generated = true;
-            spawnBlock2();
-            break;
-          case "3":
-            generated = true;
-            spawnBlock3();
-            break;
-          case "4":
-            generated = true;
-            spawnBlock4();
-            break;
-          case "5":
-            generated = true;
-            spawnBlock5();
-            break;
-        }
-        currentTerrainIndex = nextTerrainIndex;
+    else{
+      if (player.y > 650){die();}
+      player.anims.play('right', true);
+      //Jumping
+      if (cursors.up.isDown && player.body.touching.down){
+        player.setVelocityY(-1000);
       }
-    });
+      //Sending Player Position
+      var x = player.x;
+      var y = player.y;
+      //Send player position
+      this.socket.emit('playerMovement',{x : player.x, y: player.y});
 
-    //Ensures the player doesn't start in the void.
-    if (currentTerrainIndex == joiningTerrainIndex && firstTime)
-    {
-      platforms.create(player.x , 570, 'ground');
-      platforms.create(player.x + 400, 570, 'ground');
-    }
-    if(nextTerrainIndex != 0 && currentTerrainIndex != 0 && nextTerrainIndex != joiningTerrainIndex && generated == true)
-    {
-      firstTime = false;
-    }
+      //  Any speed as long as 16 evenly divides by it
+      sx += 4;
+      distance += sx;
 
-    background.y = 300;
-    background.x = cameraPos;
+      this.socket.emit('camPosRequest');
+      this.cameras.main.scrollX = cameraPos;
 
-    if(gameOver==false)
-    {
-      scoreText.x = cameraPos+16;
-      player.x = cameraPos + 100;
-      playerNameText.setText(playerNameVal);
-      playerNameText.x = player.x - (playerNameText.width/2);
-      playerNameText.y = player.y - 40;
-    }
-    if(gameOver == true && scoreSent == false){
-      this.socket.emit('sendScore',{socket: playerSocketVal,name: playerNameVal,score: score});
-      scoreSent = true;
+
+
+      //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -platforms.create(player.x , 350, 'ground');
+
+      //Get the next terrain index from the server
+      $.get('/data', {}, function(data){
+        nextTerrainIndex = data.toString();
+        if(currentTerrainIndex != nextTerrainIndex)
+        {
+          console.log("Generating Panel " + currentTerrainIndex);
+          switch(currentTerrainIndex)
+          {
+            case "0":
+              firstTime = true;
+              platforms.create(player.x , 570, 'ground');
+              platforms.create(player.x + 400, 570, 'ground');
+              break;
+            case "1":
+              generated = true;
+              spawnBlock1();
+              break;
+            case "2":
+              generated = true;
+              spawnBlock2();
+              break;
+            case "3":
+              generated = true;
+              spawnBlock3();
+              break;
+            case "4":
+              generated = true;
+              spawnBlock4();
+              break;
+            case "5":
+              generated = true;
+              spawnBlock5();
+              break;
+          }
+          currentTerrainIndex = nextTerrainIndex;
+        }
+      });
+
+      //Ensures the player doesn't start in the void.
+      if (currentTerrainIndex == joiningTerrainIndex && firstTime)
+      {
+        platforms.create(player.x , 570, 'ground');
+        platforms.create(player.x + 400, 570, 'ground');
+      }
+      if(nextTerrainIndex != 0 && currentTerrainIndex != 0 && nextTerrainIndex != joiningTerrainIndex && generated == true)
+      {
+        firstTime = false;
+      }
+
+      background.y = 300;
+      background.x = cameraPos;
+
+      if(gameOver==false)
+      {
+        scoreText.x = cameraPos+16;
+        player.x = cameraPos + 100;
+        playerNameText.setText(playerNameVal);
+        playerNameText.x = player.x - (playerNameText.width/2);
+        playerNameText.y = player.y - 40;
+      }
+      if(gameOver == true && scoreSent == false){
+        this.socket.emit('sendScore',{socket: playerSocketVal,name: playerNameVal,score: score});
+        scoreSent = true;
+      }
     }
 }
 //Procedural Generation Methods
@@ -285,7 +303,7 @@ function spawnBlock4(){
   stars.create(offset+880,470,'star');
   obstacles.create(offset+960,465,'obstacle');
   obstacles.create(offset+800,465,'obstacle');
-  obstacles.create(offset+445,515,'obstacle');}
+  obstacles.create(offset+505,515,'obstacle');}
 function spawnBlock5(){
   var offset = cameraPos+400;
   platforms.create(offset+ 400,570, 'ground');
@@ -297,6 +315,10 @@ function spawnBlock5(){
   stars.create(offset+830,420,'star');
 }
 
+function updateRoomCode(roomCode){
+  roomCodeToJoin = roomCode;
+  changingRoom = true;
+}
 function updateHighscoreText(){
   $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
   $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
@@ -339,3 +361,13 @@ function die(player){
     gameOver = true;
   }
 }
+
+
+
+
+
+$(document).ready(function() {
+    $('#joinButton').click(function() {
+        updateRoomCode($('#inputField').val());
+    });
+});

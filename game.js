@@ -176,7 +176,8 @@ function create (){
 
     //  The score
     scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#ffffff' });
-    playerNameText = this.add.text(sx+16, 50, playerNameVal, { fontSize: '15px', fill: '#ffffff', align: 'center'});
+    playerNameText = this.add.text(16, 50, playerNameVal, { fontSize: '15px', fill: '#ffffff', align: 'center'});
+    roomCodeText = this.add.text(16, 50, "Awaiting Room Code", { fontSize: '20px', fill: '#ffffff', align: 'lef'});
 
     //  Collide the player and the stars with the platforms
     this.physics.add.collider(player, platforms);
@@ -198,6 +199,7 @@ function create (){
 function update (time, delta){
     if (changingRoom == true){
       this.socket.emit('changeRoomCode',{roomCode:roomCodeToJoin});
+      roomCodeText.setText("Room Code : " + roomCodeToJoin);
       $.get('/data', {}, function(data){
         joiningTerrainIndex = data.toString();
         currentTerrainIndex = joiningTerrainIndex;
@@ -294,6 +296,7 @@ function update (time, delta){
       background.y = 300;
       background.x = cameraPos;
       scoreText.x = cameraPos+16;
+      roomCodeText.x = cameraPos+16;
       if(gameOver==false)
       {
         player.x = cameraPos + 100;
@@ -302,6 +305,7 @@ function update (time, delta){
         playerNameText.y = player.y - 40;
       }
       if(gameOver == true && scoreSent == false){
+        
         this.socket.emit('sendScore',{socket: playerSocketVal,name: playerNameVal,score: score});
         scoreSent = true;
       }

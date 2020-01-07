@@ -21,6 +21,8 @@ var stars;
 var obstacles;
 var platforms;
 var cursors;
+var restart;
+var wKey;
 var score = 0;
 var gameOver = false;
 var scoreText;
@@ -173,6 +175,9 @@ function create (){
 
     //  Input Events
     cursors = this.input.keyboard.createCursorKeys();
+    wKey = this.input.keyboard.addKey('W');
+    restart = this.input.keyboard.addKey('R');
+
 
     //  The score
     scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#ffffff' });
@@ -219,7 +224,7 @@ function update (time, delta){
       if (player.y > 650){die();}
       player.anims.play('right', true);
       //Jumping
-      if (cursors.up.isDown && player.body.touching.down){
+      if ((cursors.up.isDown||cursors.space.isDown || wKey.isDown)&& player.body.touching.down){
         player.setVelocityY(-1000);
       }
       //Sending Player Position
@@ -244,16 +249,17 @@ function update (time, delta){
         nextTerrainIndex = data.toString();
         if(currentTerrainIndex != nextTerrainIndex)
         {
-          console.log("Generating Panel " + currentTerrainIndex);
+          //console.log("Generating Panel " + currentTerrainIndex);
           currentTerrainIndex = nextTerrainIndex;
           switch(currentTerrainIndex)
           {
             case "0":
-              platforms.create(camPos.x, 570, 'ground');
-              platforms.create(camPos.x + 200, 570, 'ground');
-              platforms.create(camPos.x + 400, 570, 'ground');
-              platforms.create(camPos.x + 800, 570, 'ground');
-              platforms.create(camPos.x + 1000, 570, 'ground');
+              generated = true;
+              platforms.create(cameraPos.x + 800, 570, 'ground');
+              platforms.create(cameraPos.x + 1000, 570, 'ground');
+              platforms.create(cameraPos.x + 1200, 570, 'ground');
+              platforms.create(cameraPos.x + 1600, 570, 'ground');
+              platforms.create(cameraPos.x + 1800, 570, 'ground');
               break;
             case "1":
               generated = true;
@@ -305,15 +311,24 @@ function update (time, delta){
         playerNameText.y = player.y - 40;
       }
       if(gameOver == true && scoreSent == false){
-        
+        scoreText.setText("Game over! score:" + score + ". Press R to restart.")
         this.socket.emit('sendScore',{socket: playerSocketVal,name: playerNameVal,score: score});
         scoreSent = true;
+      }
+      if(gameOver == true && restart.isDown){
+        gameOver = false;
+        scoreSent = false;
+        player.x = cameraPos.x + 100;
+        player.y = 200;
+        scoreText.setText("score: 0");
+        score = 0;
+        console.log("Reset Player");
       }
     }
 }
 //Procedural Generation Methods
 function spawnBlock1(){
-  var offset = cameraPos+800;
+  var offset = cameraPos+600;
   platforms.create(offset+ 400,500, 'ground');
   platforms.create(offset+800,400, 'ground');
   platforms.create(offset+1200,500, 'ground');
@@ -324,7 +339,7 @@ function spawnBlock1(){
   obstacles.create(offset+760,365,'obstacle');
 }
 function spawnBlock2(){
-  var offset = cameraPos+800;
+  var offset = cameraPos+600;
   platforms.create(offset+ 400,500, 'ground');
   platforms.create(offset+800,400, 'ground');
   platforms.create(offset+1200,300, 'ground');
@@ -335,7 +350,7 @@ function spawnBlock2(){
   obstacles.create(offset+1100,265,'obstacle');
 }
 function spawnBlock3(){
-  var offset = cameraPos+800;
+  var offset = cameraPos+600;
   platforms.create(offset+ 400,550, 'ground');
   platforms.create(offset+800,450, 'ground');
   platforms.create(offset+1200,350, 'ground');
@@ -345,7 +360,7 @@ function spawnBlock3(){
   obstacles.create(offset+790,415,'obstacle');
 }
 function spawnBlock4(){
-  var offset = cameraPos+800;
+  var offset = cameraPos+600;
   platforms.create(offset+ 400,550, 'ground');
   platforms.create(offset+1010,500, 'ground');
   platforms.create(offset+920,500, 'ground');
@@ -354,7 +369,7 @@ function spawnBlock4(){
   obstacles.create(offset+800,465,'obstacle');
   obstacles.create(offset+505,515,'obstacle');}
 function spawnBlock5(){
-  var offset = cameraPos+800;
+  var offset = cameraPos+600;
   platforms.create(offset+ 400,570, 'ground');
   platforms.create(offset+800,450, 'ground');
   platforms.create(offset+1200,450, 'ground');

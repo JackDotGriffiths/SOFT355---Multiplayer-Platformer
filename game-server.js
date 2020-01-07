@@ -91,7 +91,6 @@ io.on('connection', function(socket){
   socket.on('changeRoomCode',function(roomRequest){
     //changes the room code for the current player.
     players[socket.id].roomCode = roomRequest.roomCode;
-    console.log(socket.id + " is joining room " + roomRequest.roomCode);
     console.log('# JOINING ROOM # '+ players[socket.id].playerName +' ('+ players[socket.id].playerId + ') is joining room ' + roomRequest.roomCode)
     socket.broadcast.emit('updateRoomPlayers', players);
     socket.emit('updateRoomCode', players);
@@ -140,12 +139,12 @@ function updateHighscores(){
   });
 }
 function incrementCamera(){
-  cameraPosition += 0.6;
+  cameraPosition += 0.7;
 }
 function createLevel(){ // Generates the id for the next level.
   var difference = microtime.now()-previousTime;
   //If there has been enough ticks since the previous execution, This keeps the game timing consistant.
-  if(difference >= 5000000){
+  if(difference >= 4000000){
     updateHighscores();
     previousTime = microtime.now();
     currentLevel = nextLevel;
@@ -156,13 +155,13 @@ function createLevel(){ // Generates the id for the next level.
     while(randomInt == currentLevel);
     nextLevel = randomInt;
 
-    var discrepancy  = difference - 5000000;
+    var discrepancy  = difference - 4000000;
     if (discrepancy > 5000){
       console.log("-------------------------------------------------------------------------------");
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
       console.log("-------------------------------------------------------------------------------");
       //If there's serious delay, just spawn the normal floor platform.
-      nextLevel = 0;
+      nextLevel = "0";
     }
     console.log("     -> GENERATING <- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + discrepancy + " | Camera Position : " + cameraPosition);
     previousTime = microtime.now();

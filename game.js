@@ -211,7 +211,7 @@ function update (time, delta){
     if (playerRoomCode == "NONE")
     {
       background.y = 300;
-      scoreText.setText('Join a room above!');
+      scoreText.setText('Join a room code above!');
     }
     else{
       if (player.y > 650){die();}
@@ -235,21 +235,23 @@ function update (time, delta){
 
 
 
-      //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -
-      platforms.create(player.x , 350, 'ground');
+      //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -platforms.create(player.x , 350, 'ground');
 
       //Get the next terrain index from the server
       $.get('/data', {}, function(data){
         nextTerrainIndex = data.toString();
         if(currentTerrainIndex != nextTerrainIndex)
         {
-          //console.log("Generating Panel " + currentTerrainIndex);
+          console.log("Generating Panel " + currentTerrainIndex);
+          currentTerrainIndex = nextTerrainIndex;
           switch(currentTerrainIndex)
           {
             case "0":
-              firstTime = true;
-              platforms.create(player.x , 570, 'ground');
-              platforms.create(player.x + 400, 570, 'ground');
+              platforms.create(camPos.x, 570, 'ground');
+              platforms.create(camPos.x + 200, 570, 'ground');
+              platforms.create(camPos.x + 400, 570, 'ground');
+              platforms.create(camPos.x + 800, 570, 'ground');
+              platforms.create(camPos.x + 1000, 570, 'ground');
               break;
             case "1":
               generated = true;
@@ -282,8 +284,9 @@ function update (time, delta){
         scoreText.setText('score : 0');
         platforms.create(player.x , 570, 'ground');
         platforms.create(player.x + 400, 570, 'ground');
+        platforms.create(player.x + 800, 570, 'ground');
       }
-      if(nextTerrainIndex != 0 && currentTerrainIndex != 0 && nextTerrainIndex != joiningTerrainIndex && generated == true)
+      if(nextTerrainIndex != joiningTerrainIndex && generated == true)
       {
         firstTime = false;
       }
@@ -306,7 +309,7 @@ function update (time, delta){
 }
 //Procedural Generation Methods
 function spawnBlock1(){
-  var offset = cameraPos+400;
+  var offset = cameraPos+800;
   platforms.create(offset+ 400,500, 'ground');
   platforms.create(offset+800,400, 'ground');
   platforms.create(offset+1200,500, 'ground');
@@ -317,7 +320,7 @@ function spawnBlock1(){
   obstacles.create(offset+760,365,'obstacle');
 }
 function spawnBlock2(){
-  var offset = cameraPos+400;
+  var offset = cameraPos+800;
   platforms.create(offset+ 400,500, 'ground');
   platforms.create(offset+800,400, 'ground');
   platforms.create(offset+1200,300, 'ground');
@@ -328,7 +331,7 @@ function spawnBlock2(){
   obstacles.create(offset+1100,265,'obstacle');
 }
 function spawnBlock3(){
-  var offset = cameraPos+400;
+  var offset = cameraPos+800;
   platforms.create(offset+ 400,550, 'ground');
   platforms.create(offset+800,450, 'ground');
   platforms.create(offset+1200,350, 'ground');
@@ -338,7 +341,7 @@ function spawnBlock3(){
   obstacles.create(offset+790,415,'obstacle');
 }
 function spawnBlock4(){
-  var offset = cameraPos+400;
+  var offset = cameraPos+800;
   platforms.create(offset+ 400,550, 'ground');
   platforms.create(offset+1010,500, 'ground');
   platforms.create(offset+920,500, 'ground');
@@ -347,7 +350,7 @@ function spawnBlock4(){
   obstacles.create(offset+800,465,'obstacle');
   obstacles.create(offset+505,515,'obstacle');}
 function spawnBlock5(){
-  var offset = cameraPos+400;
+  var offset = cameraPos+800;
   platforms.create(offset+ 400,570, 'ground');
   platforms.create(offset+800,450, 'ground');
   platforms.create(offset+1200,450, 'ground');

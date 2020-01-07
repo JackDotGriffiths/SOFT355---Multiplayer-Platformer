@@ -100,7 +100,7 @@ io.on('connection', function(socket){
 })
 server.listen(9000, function() { //Listener for specified port
     previousTime = microtime.now();
-    setInterval(createLevel,100);
+    setInterval(createLevel,1);
     setInterval(incrementCamera,2);
     console.log("> Server running at: http://localhost:" + 9000)
 });
@@ -139,12 +139,12 @@ function updateHighscores(){
   });
 }
 function incrementCamera(){
-  cameraPosition += 0.75;
+  cameraPosition += 0.5;
 }
 function createLevel(){ // Generates the id for the next level.
   var difference = microtime.now()-previousTime;
   //If there has been enough ticks since the previous execution, This keeps the game timing consistant.
-  if(difference >= 5000000){
+  if(difference >= 7000000){
     updateHighscores();
     previousTime = microtime.now();
     currentLevel = nextLevel;
@@ -155,11 +155,13 @@ function createLevel(){ // Generates the id for the next level.
     while(randomInt == currentLevel);
     nextLevel = randomInt;
 
-    var discrepancy  = difference - 5000000;
-    if (discrepancy > 70000){
+    var discrepancy  = difference - 7000000;
+    if (discrepancy > 5000){
       console.log("-------------------------------------------------------------------------------");
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
       console.log("-------------------------------------------------------------------------------");
+      //If there's serious delay, just spawn the normal floor platform.
+      nextLevel = 0;
     }
     console.log("     -> GENERATING <- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + discrepancy + " | Camera Position : " + cameraPosition);
     previousTime = microtime.now();

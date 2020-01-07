@@ -92,6 +92,7 @@ io.on('connection', function(socket){
     //changes the room code for the current player.
     players[socket.id].roomCode = roomRequest.roomCode;
     //console.log(socket.id + " is joining room " + roomRequest.roomCode);
+    socket.broadcast.emit('updateRoomPlayers', players);
     socket.emit('updateRoomCode', players);
     //players[roomRequest.playerSocket].roomCode = roomRequest.roomCode;
   })
@@ -138,7 +139,7 @@ function updateHighscores(){
   });
 }
 function incrementCamera(){
-  cameraPosition += 0.5;
+  cameraPosition += 0.75;
 }
 function createLevel(){ // Generates the id for the next level.
   var difference = microtime.now()-previousTime;

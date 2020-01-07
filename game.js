@@ -77,13 +77,16 @@ function create (){
           console.log("Awaiting Room Code " + players[id].roomCode);
           console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + playerNameVal);
         } else{
+          //This detects players that exist in the public room. Not necessary to draw
           console.log("New Player Found. Socket ID is " + players[id].playerId + " and name is " + players[id].playerName);
-          //addOtherPlayer(self,players[id]);
         }
       })
     })
     this.socket.on('newPlayer',function (playerInfo){
-      //addOtherPlayer(self,playerInfo);
+      if (playerInfo.roomCode == playerRoomCode && playerInfo.roomCode != "NONE"){
+        console.log("Adding Player " + playerInfo.playerName);
+        addOtherPlayer(self,playerInfo);
+      }
     })
     this.socket.on('disconnect',function(playerId){
       self.otherPlayers.getChildren().forEach(function(otherPlayer){
@@ -94,7 +97,7 @@ function create (){
     })
     this.socket.on('playerMoved',function(playerInfo){
       self.otherPlayers.getChildren().forEach(function(otherPlayer){
-        if(playerInfo.playerId == otherPlayer.playerId){
+        if(playerInfo.playerId == otherPlayer.playerId && playerInfo.roomCode == playerRoomCode){
           otherPlayer.setPosition(playerInfo.x+30,playerInfo.y);
         }
       })
@@ -105,6 +108,39 @@ function create (){
     this.socket.on('updateRoomCode',function(players){
       console.log("Changing to " + players[self.socket.id].roomCode);
       playerRoomCode = players[self.socket.id].roomCode;
+      Object.keys(players).forEach(function(id){
+        if(players[id].playerId == self.socket.id){
+          playerNameVal = players[id].playerName;
+          playerSocketVal = players[id].playerId;
+          playerRoomCode = players[id].roomCode;
+          console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + playerNameVal);
+        }
+        else if (players[id].playerId != self.socket.id && players[id].roomCode == playerRoomCode){
+          //This detects players that exist in the public room. Not necessary to draw
+          console.log("New Player Found. Socket ID is " + players[id].playerId + " and name is " + players[id].playerName);
+          addOtherPlayer(self,players[id]);
+        }
+      })
+    })
+    this.socket.on('updateRoomPlayers',function(players){
+      console.log("Updating Room Players");
+      Object.keys(players).forEach(function(id){
+        if(players[id].playerId == self.socket.id){
+          playerNameVal = players[id].playerName;
+          playerSocketVal = players[id].playerId;
+          playerRoomCode = players[id].roomCode;
+          console.log("Player Match Found. Socket ID is " + players[id].playerId + " . Name assigned of " + playerNameVal);
+        }
+        else if (players[id].playerId != self.socket.id && players[id].roomCode == playerRoomCode){
+          //This detects players that exist in the public room. Not necessary to draw
+          console.log("New Player Found. Socket ID is " + players[id].playerId + " and name is " + players[id].playerName);
+          addOtherPlayer(self,players[id]);
+        }
+      })
+
+
+
+
     })
 
 
@@ -123,13 +159,11 @@ function create (){
         frameRate: 10,
         repeat: -1
     });
-
     this.anims.create({
         key: 'turn',
         frames: [ { key: 'dude', frame: 4 } ],
         frameRate: 20
     });
-
     this.anims.create({
         key: 'right',
         frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
@@ -166,15 +200,17 @@ function update (time, delta){
       this.socket.emit('changeRoomCode',{roomCode:roomCodeToJoin});
       $.get('/data', {}, function(data){
         joiningTerrainIndex = data.toString();
+        currentTerrainIndex = joiningTerrainIndex;
+        nextTerrainIndex = joiningTerrainIndex;
       });
       scoreText.setText('score : 0');
       firstTime = true;
       changingRoom = false;
     }
     //Update the high scores
-    console.log("Room code is " + playerRoomCode)
     if (playerRoomCode == "NONE")
     {
+      background.y = 300;
       scoreText.setText('Join a room above!');
     }
     else{
@@ -199,14 +235,15 @@ function update (time, delta){
 
 
 
-      //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -platforms.create(player.x , 350, 'ground');
+      //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -
+      platforms.create(player.x , 350, 'ground');
 
       //Get the next terrain index from the server
       $.get('/data', {}, function(data){
         nextTerrainIndex = data.toString();
         if(currentTerrainIndex != nextTerrainIndex)
         {
-          console.log("Generating Panel " + currentTerrainIndex);
+          //console.log("Generating Panel " + currentTerrainIndex);
           switch(currentTerrainIndex)
           {
             case "0":
@@ -356,6 +393,7 @@ function addOtherPlayer(self, playerInfo){
  otherPlayer.setTint(0x7a7a7a);
  otherPlayer.playerId = playerInfo.playerId;
  otherPlayer.playerName = playerInfo.playerName;
+ otherPlayer.roomCode = playerInfo.roomCode;
  self.otherPlayers.add(otherPlayer);
 }
 function die(player){

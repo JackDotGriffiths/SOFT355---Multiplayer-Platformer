@@ -26,7 +26,7 @@ var score = 0;
 var gameOver = false;
 var scoreText;
 
-//Current player 
+//Current player
 var playerNameText;
 var playerSocketVal;
 var playerNameVal;
@@ -331,7 +331,7 @@ function update (time, delta){
 }
 //Procedural Generation Methods
 function spawnBlock1(){
-  var offset = cameraPos+600;
+  var offset = cameraPos+400;
   platforms.create(offset+ 400,500, 'ground');
   platforms.create(offset+800,400, 'ground');
   platforms.create(offset+1200,500, 'ground');
@@ -342,7 +342,7 @@ function spawnBlock1(){
   obstacles.create(offset+760,365,'obstacle');
 }
 function spawnBlock2(){
-  var offset = cameraPos+600;
+  var offset = cameraPos+400;
   platforms.create(offset+ 400,500, 'ground');
   platforms.create(offset+800,400, 'ground');
   platforms.create(offset+1200,300, 'ground');
@@ -353,7 +353,7 @@ function spawnBlock2(){
   obstacles.create(offset+1100,265,'obstacle');
 }
 function spawnBlock3(){
-  var offset = cameraPos+600;
+  var offset = cameraPos+400;
   platforms.create(offset+ 400,550, 'ground');
   platforms.create(offset+800,450, 'ground');
   platforms.create(offset+1200,350, 'ground');
@@ -363,7 +363,7 @@ function spawnBlock3(){
   obstacles.create(offset+790,415,'obstacle');
 }
 function spawnBlock4(){
-  var offset = cameraPos+600;
+  var offset = cameraPos+400;
   platforms.create(offset+ 400,550, 'ground');
   platforms.create(offset+1010,500, 'ground');
   platforms.create(offset+920,500, 'ground');
@@ -372,7 +372,7 @@ function spawnBlock4(){
   obstacles.create(offset+800,465,'obstacle');
   obstacles.create(offset+505,515,'obstacle');}
 function spawnBlock5(){
-  var offset = cameraPos+600;
+  var offset = cameraPos+400;
   platforms.create(offset+ 400,570, 'ground');
   platforms.create(offset+800,450, 'ground');
   platforms.create(offset+1200,450, 'ground');

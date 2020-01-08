@@ -1,20 +1,32 @@
-//HTTP and Express used to create the server
-var http = require('http');
-var express = require('express');
-
-//FileHander used to ensure correct files are served
-var finalhandler = require('finalhandler');
-var serveStatic = require('serve-static');
-
-//Microtime used to ensure accurate ticks on the server for procedural generation
-var microtime = require('microtime');
+var express = require('express');//HTTP and Express used to create the server
+var serveStatic = require('serve-static');//FileHander used to ensure correct files are served
+var microtime = require('microtime');//Microtime used to ensure accurate ticks on the server for procedural generation
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
+var mongoose = require('mongoose');//Mongoose used to control connection to MongoDB for highscore storage on the database.
+var bodyParser = require("body-parser");
 
-//Mongoose used to control connection to MongoDB for highscore storage on the database.
-var mongoose = require('mongoose');
-//const uri = "mongodb+srv://gameServer:la3hStfpuh5hdGvh@cluster0-5gxvf.mongodb.net/SOFT356?retryWrites=true&w=majority";
+app.use(bodyParser.urlencoded({extended:true}));
+
+
+//module.exports.Entry = Entry;
+var currentLevel = 1;
+var nextLevel = 2;
+var previousCamPos = 0;
+var previousTime = 0;
+
+//Multiplayer
+var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer","Camel","Whale","Mongoose","David","Moose"];
+var players = {};
+var cameraPosition = 0;
+var highscore1 = "#1 - No Data Available";
+var highscore2 = "#2 - No Data Available";
+var highscore3 = "#3 - No Data Available";
+
+
+
+
 const uri = "mongodb+srv://gameServer:gameServerUser@cluster0-5gxvf.mongodb.net/test?retryWrites=true&w=majority"
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology : true});
 const db = mongoose.connection;
@@ -34,24 +46,10 @@ const scoreSchema = mongoose.Schema(schema);
 const ScoreModel = mongoose.model(collectionName,scoreSchema);
 var ScoreList = [];
 
-//module.exports.Entry = Entry;
-var serve = serveStatic("./");
-var currentLevel = 1;
-var nextLevel = 2;
-var previousTime;
-
-//Multiplayer
-var players = {};
-var cameraPosition = 0;
-var highscore1 = "No Data Available";
-var highscore2 = "No Data Available";
-var highscore3 = "No Data Available";
-
 app.use(express.static('./'));//Serving static file
 
 //Websockets used to control Multiplayer elements of gameplay.
 io.on('connection', function(socket){
-  var possibleNames = ["Koala","Giraffe","Hippo","Gorilla","Elephant","Frog","Cobra","Aardvark","Quoka","Bison","Lion","Deer","Camel","Whale","Mongoose","David","Moose"];
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
   players[socket.id] = {
     playerId : socket.id,
@@ -98,12 +96,16 @@ io.on('connection', function(socket){
   })
 
 })
+
+
 server.listen(9000, function() { //Listener for specified port
     previousTime = microtime.now();
-    setInterval(createLevel,1);
+    previousCamPos = cameraPosition;
     setInterval(incrementCamera,2);
     console.log("> Server running at: http://localhost:" + 9000)
 });
+
+
 app.get('/data', function(req, res) {
   res.send(nextLevel.toString());
 });
@@ -116,6 +118,21 @@ app.get('/highscore2',function(req,res){
 app.get('/highscore3',function(req,res){
   res.send(highscore3.toString());
 });
+app.get("/newstudent", function(request, response) {
+  var studentName = request.query.studentName;
+  var course = request.query.course;
+  console.log(course);
+  // Create a new student instance with the posted data.
+  var myStudent = new Student({name: studentName,
+  course: course});
+  myStudent.save(function(err) {
+  // Error handling here.
+  });
+  response.send("Student successfully saved");
+});
+
+app.post('updateScores')
+
 
 function saveScoreToDatabase(socketID,playerName,playerScore){
   ScoreModel.create({
@@ -139,12 +156,14 @@ function updateHighscores(){
   });
 }
 function incrementCamera(){
-  cameraPosition += 0.7;
+  cameraPosition += 0.6;
+  createLevel();
 }
-function createLevel(){ // Generates the id for the next level.
-  var difference = microtime.now()-previousTime;
-  //If there has been enough ticks since the previous execution, This keeps the game timing consistant.
-  if(difference >= 4000000){
+function createLevel()
+{ // Generates the id for the next level.
+  var difference = cameraPosition-previousCamPos;
+  var differenceTicks = microtime.now()-previousTime;
+  if (difference >= 1200){
     updateHighscores();
     previousTime = microtime.now();
     currentLevel = nextLevel;
@@ -154,16 +173,15 @@ function createLevel(){ // Generates the id for the next level.
     }
     while(randomInt == currentLevel);
     nextLevel = randomInt;
-
-    var discrepancy  = difference - 4000000;
-    if (discrepancy > 5000){
+    previousCamPos = cameraPosition;
+    var discrepancy  = differenceTicks - 4000000;
+    if (discrepancy > 1500000){
       console.log("-------------------------------------------------------------------------------");
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
       console.log("-------------------------------------------------------------------------------");
       //If there's serious delay, just spawn the normal floor platform.
       nextLevel = "0";
+      previousTime = microtime.now();
     }
-    console.log("     -> GENERATING <- Incoming section : " + nextLevel + " | Delay : " + difference + " ticks | Discrepancy : " + discrepancy + " | Camera Position : " + cameraPosition);
-    previousTime = microtime.now();
   }
 }

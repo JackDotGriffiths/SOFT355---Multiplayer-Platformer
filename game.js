@@ -316,10 +316,12 @@ function update (time, delta){
         scoreSent = true;
       }
       if(gameOver == true && restart.isDown){
+        platforms.create(player.x , 230, 'ground');
+        platforms.create(player.x+ 300 , 230, 'ground');
         gameOver = false;
         scoreSent = false;
         player.x = cameraPos.x + 100;
-        player.y = 200;
+        player.y = 50;
         scoreText.setText("score: 0");
         score = 0;
         console.log("Reset Player");
@@ -380,8 +382,10 @@ function spawnBlock5(){
 }
 
 function updateRoomCode(roomCode){
-  roomCodeToJoin = roomCode;
-  changingRoom = true;
+  if (roomCode != ""){
+    roomCodeToJoin = roomCode;
+    changingRoom = true;
+  }
 }
 function updateHighscoreText(){
   $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});

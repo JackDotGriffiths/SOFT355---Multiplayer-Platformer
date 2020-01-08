@@ -39,18 +39,22 @@ suite("> Running chai testing on the game-server", function()
     {
       chai.request('http://localhost:9000').get("/highscore3").end(function(err, res)
       {
+        chai.assert.equal(res.status, 200);
         chai.assert.typeOf(res.text, 'string','/highscore1 is a string.');
         chai.expect(res.text).to.contain("#3");
       });
     });
 
   //Testing a player joining the server associates the correct data
-    test("Test /addPlayer/ endpoint",function(){
-      chai.request('http://localhost:9000').get("/highscore3").end(function(err, res)
+    test("Test Player Connecting", function()
+    {
+      chai.request('http://localhost:9000').post("/testConnect/").set('content-type','application/x-www-form-urlencoded').send({id:"testID"}).end(function(err, res)
       {
-        chai.assert.typeOf(res.text, 'string','/highscore1 is a string.');
-        chai.expect(res.text).to.contain("#3");
+        var id = "testID";
+        chai.assert.equal(res.status, 200);
+        chai.assert.equal(res.body[id].playerId, "testID");
+        chai.assert.equal(res.body[id].playerName, "TestName");
+        chai.assert.equal(res.body[id].roomCode, "NONE");
       });
-    })
-
+    });
 });

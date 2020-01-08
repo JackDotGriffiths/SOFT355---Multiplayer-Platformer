@@ -15,7 +15,6 @@ var config = {
         update: update
     }
 };
-
 var player;
 var stars;
 var obstacles;
@@ -26,10 +25,12 @@ var wKey;
 var score = 0;
 var gameOver = false;
 var scoreText;
-var playerNameText;
 
+//Current player 
+var playerNameText;
 var playerSocketVal;
 var playerNameVal;
+
 var playerRoomCode;
 var roomCodeToJoin;
 var changingRoom = false;
@@ -316,11 +317,11 @@ function update (time, delta){
         scoreSent = true;
       }
       if(gameOver == true && restart.isDown){
-        platforms.create(player.x , 230, 'ground');
-        platforms.create(player.x+ 300 , 230, 'ground');
         gameOver = false;
         scoreSent = false;
         player.x = cameraPos.x + 100;
+        platforms.create(player.x , 230, 'ground');
+        platforms.create(player.x+ 300 , 230, 'ground');
         player.y = 50;
         scoreText.setText("score: 0");
         score = 0;

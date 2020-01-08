@@ -118,21 +118,10 @@ app.get('/highscore2',function(req,res){
 app.get('/highscore3',function(req,res){
   res.send(highscore3.toString());
 });
-app.get("/newstudent", function(request, response) {
-  var studentName = request.query.studentName;
-  var course = request.query.course;
-  console.log(course);
-  // Create a new student instance with the posted data.
-  var myStudent = new Student({name: studentName,
-  course: course});
-  myStudent.save(function(err) {
-  // Error handling here.
-  });
-  response.send("Student successfully saved");
-});
 
-app.post('updateScores')
-
+app.post('/testConnect/',function(req,res){
+  connectNoEmit(req,res);
+})
 
 function saveScoreToDatabase(socketID,playerName,playerScore){
   ScoreModel.create({
@@ -159,8 +148,7 @@ function incrementCamera(){
   cameraPosition += 0.6;
   createLevel();
 }
-function createLevel()
-{ // Generates the id for the next level.
+function createLevel(){
   var difference = cameraPosition-previousCamPos;
   var differenceTicks = microtime.now()-previousTime;
   if (difference >= 1200){
@@ -184,4 +172,20 @@ function createLevel()
       previousTime = microtime.now();
     }
   }
+}
+
+
+
+//Testing
+function connectNoEmit(req, res)
+{
+  socket = {};
+  socket.id = req.body.id;
+  players[socket.id] =
+  {
+      playerId: socket.id,
+      playerName : "TestName",
+      roomCode : "NONE"
+  }
+  res.send(players);
 }

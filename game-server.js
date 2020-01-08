@@ -145,7 +145,7 @@ function updateHighscores(){
   });
 }
 function incrementCamera(){
-  cameraPosition += 0.6;
+  cameraPosition += 0.63;
   createLevel();
 }
 function createLevel(){
@@ -167,8 +167,6 @@ function createLevel(){
       console.log("-------------------------------------------------------------------------------");
       console.log("-> SERVER DELAY <- Warning: Discrepancy of " + discrepancy + " ticks detected. ");
       console.log("-------------------------------------------------------------------------------");
-      //If there's serious delay, just spawn the normal floor platform.
-      nextLevel = "0";
       previousTime = microtime.now();
     }
   }

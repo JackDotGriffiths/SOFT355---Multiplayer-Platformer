@@ -26,7 +26,7 @@ var highscore3 = "#3 - No Data Available";
 
 
 
-
+//MongoDB connection through Mongoose and a schema to format the data.
 const uri = "mongodb+srv://gameServer:gameServerUser@cluster0-5gxvf.mongodb.net/test?retryWrites=true&w=majority"
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology : true});
 const db = mongoose.connection;
@@ -50,6 +50,7 @@ app.use(express.static('./'));//Serving static file
 
 //Websockets used to control Multiplayer elements of gameplay.
 io.on('connection', function(socket){
+  //Player joins, is assigned a player object and is given a randomly generated name.
   var randomInt = Math.floor(Math.random() * Math.floor(possibleNames.length));
   players[socket.id] = {
     playerId : socket.id,
@@ -63,29 +64,29 @@ io.on('connection', function(socket){
   socket.on('camPosRequest',function(){
     io.emit('camPos',cameraPosition);
   })
-
+  //Disconnect a player
   socket.on('disconnect', function(){
   console.log('- PLAYER DISCONNECTED - '+ players[socket.id].playerName +' has disconnected from ' + socket.id)
   delete players[socket.id];
   io.emit('disconnect',socket.id);
   })
-
+  //All player movement runs through this socket, and is sent to all players.
   socket.on('playerMovement',function(movementData){
     players[socket.id].x = movementData.x;
     players[socket.id].y = movementData.y;
     socket.broadcast.emit('playerMoved',players[socket.id]);
   })
-
+  //Send a score to the database
   socket.on('sendScore',function(playerData){
     //Send the score to the database.
     saveScoreToDatabase(playerData.socket,playerData.name,playerData.score);
   })
-
+  //a request for the update of high scores
   socket.on('updateScores',function(){
     //Requests the highscores from the database.
     socket.broadcast.emit('updateHighscores');
   })
-
+  //a request to change room code
   socket.on('changeRoomCode',function(roomRequest){
     //changes the room code for the current player.
     players[socket.id].roomCode = roomRequest.roomCode;
@@ -101,11 +102,12 @@ io.on('connection', function(socket){
 server.listen(9000, function() { //Listener for specified port
     previousTime = microtime.now();
     previousCamPos = cameraPosition;
+    //Continuously increment the camera.
     setInterval(incrementCamera,2);
     console.log("> Server running at: http://localhost:" + 9000)
 });
 
-
+//Express requests for data, highscores and test connections
 app.get('/data', function(req, res) {
   res.send(nextLevel.toString());
 });
@@ -118,11 +120,11 @@ app.get('/highscore2',function(req,res){
 app.get('/highscore3',function(req,res){
   res.send(highscore3.toString());
 });
-
 app.post('/testConnect/',function(req,res){
   connectNoEmit(req,res);
 })
 
+//Sends the score to the database using the passed in parameters
 function saveScoreToDatabase(socketID,playerName,playerScore){
   ScoreModel.create({
     playerSocket : socketID,
@@ -133,6 +135,7 @@ function saveScoreToDatabase(socketID,playerName,playerScore){
   updateHighscores();
 
 }
+//Live update the highscores by reading data from the mongo DB.
 function updateHighscores(){
   ScoreModel.find({}).sort('-playerScore').exec(function(err,ScoreModels){
     ScoreList = ScoreModels;
@@ -144,10 +147,12 @@ function updateHighscores(){
     // console.log(highscore3);
   });
 }
+//Increment the camera position. The speed of which has been finely tuned through usability testing.
 function incrementCamera(){
   cameraPosition += 0.63;
   createLevel();
 }
+//Randomly generates a level block index when the camera has moved far enough to require one. Also calculates server delay through accurate tick counting.
 function createLevel(){
   var difference = cameraPosition-previousCamPos;
   var differenceTicks = microtime.now()-previousTime;
@@ -174,7 +179,7 @@ function createLevel(){
 
 
 
-//Testing
+//Testing method for player connection.
 function connectNoEmit(req, res)
 {
   socket = {};

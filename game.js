@@ -41,8 +41,6 @@ var background;
 
 var map;
 var sx = 0;
-var distance = 0;
-var prevDistance = 0;
 var mapWidth = 51;
 var mapHeight = 37;
 var generated = false;
@@ -60,6 +58,7 @@ var background;
 var game = new Phaser.Game(config);
 setInterval(function(){updateHighscoreText();},200);
 function preload (){
+    //preload all necessary assets.
     this.load.image('sky', 'assets/sky.png');
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
@@ -67,10 +66,13 @@ function preload (){
     this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
 }
 
+//Runs game and environment setup.
 function create (){
     var self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.staticGroup();
+
+    //Requests all of the current players in the server, to console.log and check correct connection has been made.
     this.socket.on('currentPlayers',function(players){
       Object.keys(players).forEach(function(id){
         if(players[id].playerId == self.socket.id){
@@ -85,12 +87,14 @@ function create (){
         }
       })
     })
+    //If a player joins your room, create a new player object for them.
     this.socket.on('newPlayer',function (playerInfo){
       if (playerInfo.roomCode == playerRoomCode && playerInfo.roomCode != "NONE"){
         console.log("Adding Player " + playerInfo.playerName);
         addOtherPlayer(self,playerInfo);
       }
     })
+    //If a player disconnects, remove their player object.
     this.socket.on('disconnect',function(playerId){
       self.otherPlayers.getChildren().forEach(function(otherPlayer){
         if(playerId == otherPlayer.playerId){
@@ -98,6 +102,7 @@ function create (){
         }
       })
     })
+    //When any player moves across the server, update the position of their sprite on the players screen.
     this.socket.on('playerMoved',function(playerInfo){
       self.otherPlayers.getChildren().forEach(function(otherPlayer){
         if(playerInfo.playerId == otherPlayer.playerId && playerInfo.roomCode == playerRoomCode){
@@ -105,9 +110,11 @@ function create (){
         }
       })
     })
+    //Listener for the cameraPosition on the server, which is sent on a very quick interval.
     this.socket.on('camPos',function(camValue){
         cameraPos = camValue;
     })
+    //Update the players room code and then check whether there are any other players in the room.
     this.socket.on('updateRoomCode',function(players){
       console.log("Changing to " + players[self.socket.id].roomCode);
       playerRoomCode = players[self.socket.id].roomCode;
@@ -125,6 +132,7 @@ function create (){
         }
       })
     })
+    //If a player joins the current room, add their player object
     this.socket.on('updateRoomPlayers',function(players){
       console.log("Updating Room Players");
       Object.keys(players).forEach(function(id){
@@ -141,12 +149,10 @@ function create (){
         }
       })
 
-
-
-
     })
 
 
+    //Adding appropraite sprites and physics to the game
     background = this.physics.add.sprite(400, 300, 'sky');
     //this.otherPlayers.body.setAllowGravity(false);
     platforms = this.physics.add.staticGroup();
@@ -180,7 +186,7 @@ function create (){
     restart = this.input.keyboard.addKey('R');
 
 
-    //  The score
+    //  The score and other text prompts
     scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#ffffff' });
     playerNameText = this.add.text(16, 50, playerNameVal, { fontSize: '15px', fill: '#ffffff', align: 'center'});
     roomCodeText = this.add.text(16, 50, "Awaiting Room Code", { fontSize: '20px', fill: '#ffffff', align: 'lef'});
@@ -195,6 +201,7 @@ function create (){
 
     this.physics.add.collider(player, obstacles, hitObstacle, null, this);
 
+//Gets the index of the terrain when joining, to check when the player needs to have the environment sent to them.
     $.get('/data', {}, function(data){
       joiningTerrainIndex = data.toString();
       currentTerrainIndex = joiningTerrainIndex;
@@ -202,50 +209,61 @@ function create (){
     });
 }
 
+//Phaser implements this update function, which is ran every frame.
 function update (time, delta){
+  //While the player is changing room, send this change to the server and ensure it's updated properly.
     if (changingRoom == true){
       this.socket.emit('changeRoomCode',{roomCode:roomCodeToJoin});
       roomCodeText.setText("Room Code : " + roomCodeToJoin);
+      //Gets the index of the terrain when joining, to check when the player needs to have the environment sent to them.
       $.get('/data', {}, function(data){
         joiningTerrainIndex = data.toString();
         currentTerrainIndex = joiningTerrainIndex;
         nextTerrainIndex = joiningTerrainIndex;
       });
-      scoreText.setText('score : 0');
+      if(gameOver == false)
+      {
+        scoreText.setText('score : 0');
+        score = 0;
+      }
       firstTime = true;
       changingRoom = false;
     }
-    //Update the high scores
+    //Update the text if the player isn't in a room.
     if (playerRoomCode == "NONE")
     {
       background.y = 300;
       scoreText.setText('Join a room code above!');
     }
     else{
+
+      //Kill player if they fall off the screen.
       if (player.y > 650){die();}
+
+      //Ensure constant running animation
       player.anims.play('right', true);
-      //Jumping
+
+
+      //Input Management for Jumping
       if ((cursors.up.isDown||cursors.space.isDown || wKey.isDown)&& player.body.touching.down){
         player.setVelocityY(-1000);
       }
-      //Sending Player Position
-      var x = player.x;
-      var y = player.y;
-      //Send player position
+      //Sending Player Position to the server.
       this.socket.emit('playerMovement',{x : player.x, y: player.y});
 
-      //  Any speed as long as 16 evenly divides by it
-      sx += 4;
-      distance += sx;
-
+      //Socket to request camera position from server and move appropriately.
       this.socket.emit('camPosRequest');
       this.cameras.main.scrollX = cameraPos;
+      background.y = 300;
+      background.x = cameraPos;
+      scoreText.x = cameraPos+16;
+      roomCodeText.x = cameraPos+16;
 
 
 
       //UNCOMMENT FOR SAFETY PLATFORM FOR DEMO -platforms.create(player.x , 350, 'ground');
 
-      //Get the next terrain index from the server
+      //Get the next terrain index from the server, and spawn the appropriate block.
       $.get('/data', {}, function(data){
         nextTerrainIndex = data.toString();
         if(currentTerrainIndex != nextTerrainIndex)
@@ -287,7 +305,7 @@ function update (time, delta){
         }
       });
 
-      //Ensures the player doesn't start in the void.
+      //Ensures the player doesn't start in the void by spawning a platform under them if they join or refresh during a block.
       if (currentTerrainIndex == joiningTerrainIndex && firstTime)
       {
         scoreText.setText('score : 0');
@@ -300,10 +318,8 @@ function update (time, delta){
         firstTime = false;
       }
 
-      background.y = 300;
-      background.x = cameraPos;
-      scoreText.x = cameraPos+16;
-      roomCodeText.x = cameraPos+16;
+
+      //Keep player and their name plate moving if they're alive
       if(gameOver==false)
       {
         player.x = cameraPos + 100;
@@ -311,25 +327,29 @@ function update (time, delta){
         playerNameText.x = player.x - (playerNameText.width/2);
         playerNameText.y = player.y - 40;
       }
+
+      //Send the score to the server through a socket
       if(gameOver == true && scoreSent == false){
         scoreText.setText("Game over! score:" + score + ". Press R to restart.")
         this.socket.emit('sendScore',{socket: playerSocketVal,name: playerNameVal,score: score});
         scoreSent = true;
       }
+
+      //Restart the game
       if(gameOver == true && restart.isDown){
         gameOver = false;
         scoreSent = false;
         player.x = cameraPos.x + 100;
         platforms.create(player.x , 230, 'ground');
         platforms.create(player.x+ 300 , 230, 'ground');
-        player.y = 50;
+        player.y = 150;
         scoreText.setText("score: 0");
         score = 0;
-        console.log("Reset Player");
+        console.log("Restarting Player");
       }
     }
 }
-//Procedural Generation Methods
+//PROC GEN - All of the sections used for generating environment.
 function spawnBlock1(){
   var offset = cameraPos+400;
   platforms.create(offset+ 400,500, 'ground');
@@ -382,17 +402,8 @@ function spawnBlock5(){
   stars.create(offset+830,420,'star');
 }
 
-function updateRoomCode(roomCode){
-  if (roomCode != ""){
-    roomCodeToJoin = roomCode;
-    changingRoom = true;
-  }
-}
-function updateHighscoreText(){
-  $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
-  $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
-  $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
-}
+
+//GAMEPLAY METHODS - Control gameplay
 function collectStar (player, star){
     star.disableBody(true, true);
 
@@ -433,6 +444,22 @@ function die(player){
 }
 
 
+//Request to update current players room code.
+function updateRoomCode(roomCode){
+  if (roomCode != ""){
+    roomCodeToJoin = roomCode;
+    changingRoom = true;
+  }
+}
+
+//Request to update the highscore text through jQuery.
+function updateHighscoreText(){
+  $.get('/highscore1', {}, function(data){$('#highscore1Text').text(data);});
+  $.get('/highscore2', {}, function(data){$('#highscore2Text').text(data);});
+  $.get('/highscore3', {}, function(data){$('#highscore3Text').text(data);});
+}
+
+//Listener for join game room button press.
 $(document).ready(function() {
     $('#joinButton').click(function() {
         updateRoomCode($('#inputField').val());
